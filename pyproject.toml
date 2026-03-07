@@ -1,0 +1,7 @@
+[project]
+name = "branch-flow"
+version = "0.1.0"
+dependencies = ["typer"]
+
+[project.scripts]
+bf = "branchflow.cli:app"
