@@ -1,19 +1,18 @@
 import typer
-from typer import Argument
 
 app = typer.Typer()
 
 
 @app.command()
-def add():
+def add(name: str, directory: str = "."):
     """
     Add a new project to the list of tracked projects.
     """
-    print("Current project added to tracked projects.")
+    print(f'Project {name} added to tracked projects.')
 
 
 @app.command()
-def new(name=Argument(None, help="Name of the project")):
+def new(name: str, directories: list[str] = None, description: str = None):
     """
     Create and start a new task.
     """
@@ -29,7 +28,7 @@ def task_list():
 
 
 @app.command()
-def status():
+def status(name: str = None):
     """
     Show the status of the current task.
     """
@@ -37,7 +36,7 @@ def status():
 
 
 @app.command()
-def switch():
+def switch(name: str):
     """
     Switch to an existing task.
     """
@@ -45,7 +44,7 @@ def switch():
 
 
 @app.command()
-def load():
+def load(name: str):
     """
     Load a non-tracked task.
     """
