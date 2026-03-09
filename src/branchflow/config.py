@@ -70,3 +70,23 @@ def add_task(name: str, description: Optional[str], projects: list[str], parent:
 def get_all_tasks():
     tasks = load_config().get("tasks", [])
     return tasks if tasks else []
+
+
+def get_current_task():
+    config = load_config()
+    task_name = config.get("current_task", None)
+    if task_name:
+        tasks_by_name = {task['name']: task for task in config.get("tasks", [])}
+        if task_name not in tasks_by_name.keys():
+            return None
+        return tasks_by_name[task_name]
+    return None
+
+
+def set_current_task(task_name: str):
+    config = load_config()
+    if task_name not in [task['name'] for task in config.get("tasks", [])]:
+        raise ValueError(f"Task [bold green]{task_name}[/] does not exist.")
+
+    config["current_task"] = task_name
+    save_config(config)

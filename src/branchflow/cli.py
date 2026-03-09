@@ -1,5 +1,5 @@
 import typer
-from branchflow.config import add_project, add_task, get_all_tasks
+from branchflow.config import add_project, add_task, get_all_tasks, get_current_task, set_current_task
 from rich.box import MINIMAL
 from rich.columns import Columns
 from rich.console import Console
@@ -34,6 +34,7 @@ def new(name: str,
     """
     try:
         add_task(name, description, projects, parent)
+        set_current_task(name)
         console.print(f'Created task \'{name}\'.')
     except ValueError as e:
         console.print(f'[bold red]Error:[/] {e}')
@@ -53,7 +54,11 @@ def status(name: str = None):
     """
     Show the status of the current task.
     """
-    print_task()
+    task = get_current_task()
+    if not task:
+        console.print("No task is currently active.")
+    else:
+        console.print(_print_task(task))
 
 
 @app.command()
@@ -61,7 +66,11 @@ def switch(name: str):
     """
     Switch to an existing task.
     """
-    console.print(f"Switched to task [bold green]{name}[/].")
+    try:
+        set_current_task(name)
+        console.print(f"Switched to task [bold green]{name}[/].")
+    except ValueError as e:
+        console.print(f'[bold red]Error:[/] {e}')
 
 
 @app.command()
