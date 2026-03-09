@@ -120,12 +120,13 @@ def _print_task(task):
         result += "\n"
     if task.get('parent'):
         result += f"[bold]Parent:[/] {task.get('parent')}\n"
-    result += f"[bold]Projects:[/] [{', '.join(task.get('projects', []))}]\n"
+
+    projects = ', '.join(task.get('projects', []))
+    result += f"[bold]Projects:[/] {projects if projects else '-'}\n"
     branches = task.get('branches', {})
     result += "[bold]Branches:[/]\n"
     for project, branch in branches.items():
-        emoji = ":arrow_up_small:" if project == "GPM" else ":computer:"
-        result += f"  * {project}: {branch} {emoji}"
+        result += f"  * {project}: {branch}"
     if branches.items().__len__() == 0:
         result += "  * No branches tracked"
     return Panel.fit(result, width=30, box=MINIMAL)
