@@ -1,6 +1,7 @@
 import typer
-from branchflow.config import add_project
+from branchflow.config import add_project, add_task
 from rich.console import Console
+from typing import Annotated
 
 from branchflow.mock_data import print_tasks, print_task
 
@@ -21,11 +22,18 @@ def add(name: str, directory: str = "."):
 
 
 @app.command()
-def new(name: str, directories: list[str] = None, description: str = None):
+def new(name: str,
+        projects: Annotated[list[str], typer.Option("--project")] = [],
+        description: str = None,
+        parent: str = None):
     """
     Create and start a new task.
     """
-    console.print(f'Created task \'{name}\'.')
+    try:
+        add_task(name, description, projects, parent)
+        console.print(f'Created task \'{name}\'.')
+    except ValueError as e:
+        console.print(f'[bold red]Error:[/] {e}')
 
 
 @app.command("list")

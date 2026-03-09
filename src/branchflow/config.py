@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -36,3 +37,25 @@ def add_project(name: str, directory: str) -> str:
     config["projects"] = projects_
     save_config(config)
     return str(project_path)
+
+def add_task(name: str, description: Optional[str], projects: list[str], parent: Optional[str]):
+    config = load_config()
+    tasks_ = config.get("tasks", {})
+
+    if name in tasks_:
+        raise ValueError(f"Task [bold green]{name}[/] already exists.")
+
+    projects_ = config.get("projects", {})
+    for project in projects:
+        if project not in projects_:
+            raise ValueError(f"Unknown project [bold]{project}[/]. Add it with [italic]'bf add {project}'[/] first.")
+
+    tasks_[name] = {}
+    if description:
+        tasks_[name]["description"] = description
+    if projects:
+        tasks_[name]["projects"] = projects
+    if parent:
+        tasks_[name]["parent"] = parent
+    config["tasks"] = tasks_
+    save_config(config)
