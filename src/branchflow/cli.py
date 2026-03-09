@@ -1,6 +1,9 @@
 import typer
-from branchflow.config import add_project, add_task
+from branchflow.config import add_project, add_task, get_all_tasks
+from rich.box import MINIMAL
+from rich.columns import Columns
 from rich.console import Console
+from rich.panel import Panel
 from typing import Annotated
 
 from branchflow.mock_data import print_tasks, print_task
@@ -41,7 +44,8 @@ def task_list():
     """
     Lists all the tracked tasks.
     """
-    print_tasks()
+    tasks = get_all_tasks()
+    _print_tasks(tasks)
 
 
 @app.command()
@@ -92,6 +96,30 @@ def cleanup():
     """
     console.print("Closed up 0 tasks.")
 
+def _print_tasks(tasks: dict = {}):
+    console.print("[bold green]Tracked Tasks[/]")
+    console.print(Columns(
+        [_print_task(t) for t in tasks],
+        equal=True,
+    ))
+
+def _print_task(task):
+    result = f"[bold green]{task['name']}[/]"
+    if task.get('description'):
+        result += f": {task.get('description', '')}\n"
+    else:
+        result += "\n"
+    if task.get('parent'):
+        result += f"[bold]Parent:[/] {task.get('parent')}\n"
+    result += f"[bold]Projects:[/] [{', '.join(task.get('projects', []))}]\n"
+    branches = task.get('branches', {})
+    result += "[bold]Branches:[/]\n"
+    for project, branch in branches.items():
+        emoji = ":arrow_up_small:" if project == "GPM" else ":computer:"
+        result += f"  * {project}: {branch} {emoji}"
+    if branches.items().__len__() == 0:
+        result += "  * No branches tracked"
+    return Panel.fit(result, width=30, box=MINIMAL)
 
 if __name__ == "__main__":
     app()

@@ -26,7 +26,7 @@ def add_project(name: str, directory: str) -> str:
     projects_ = config.get("projects", {})
 
     if name in projects_:
-        raise ValueError(f"Project {name} already exists ({projects_[name]}).")
+        raise ValueError(f"Project [bold]{name}[/] already exists ({projects_[name]}).")
 
     project_path = Path(directory).resolve()
 
@@ -38,24 +38,35 @@ def add_project(name: str, directory: str) -> str:
     save_config(config)
     return str(project_path)
 
+
 def add_task(name: str, description: Optional[str], projects: list[str], parent: Optional[str]):
     config = load_config()
-    tasks_ = config.get("tasks", {})
+    tasks_: list[dict] = config.get("tasks", [])
 
-    if name in tasks_:
+    task_names = [task['name'] for task in tasks_]
+    if name in task_names:
         raise ValueError(f"Task [bold green]{name}[/] already exists.")
+
+    if parent and parent not in task_names:
+        raise ValueError(f"Parent task [bold green]{parent}[/] does not exist.")
 
     projects_ = config.get("projects", {})
     for project in projects:
         if project not in projects_:
             raise ValueError(f"Unknown project [bold]{project}[/]. Add it with [italic]'bf add {project}'[/] first.")
 
-    tasks_[name] = {}
+    task = {"name": name}
     if description:
-        tasks_[name]["description"] = description
+        task["description"] = description
     if projects:
-        tasks_[name]["projects"] = projects
+        task["projects"] = projects
     if parent:
-        tasks_[name]["parent"] = parent
+        task["parent"] = parent
+    tasks_.append(task)
     config["tasks"] = tasks_
     save_config(config)
+
+
+def get_all_tasks():
+    tasks = load_config().get("tasks", [])
+    return tasks if tasks else []
