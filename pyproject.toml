@@ -3,7 +3,8 @@ name = "branch-flow"
 version = "0.1.0"
 dependencies = [
     "typer",
-    "rich"
+    "rich",
+    "pyyaml"
 ]
 
 [project.scripts]

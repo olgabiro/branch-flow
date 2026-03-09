@@ -1,4 +1,5 @@
 import typer
+from branchflow.config import add_project
 from rich.console import Console
 
 from branchflow.mock_data import print_tasks, print_task
@@ -12,7 +13,11 @@ def add(name: str, directory: str = "."):
     """
     Add a new project to the list of tracked projects.
     """
-    console.print(f'Project [bold]{name}[/] ({directory}) added to tracked projects.')
+    try :
+        project_path = add_project(name, directory)
+        console.print(f'Project [bold]{name}[/] ({project_path}) added to tracked projects.')
+    except ValueError as e:
+        console.print(f'[bold red]Error:[/] {e}')
 
 
 @app.command()
