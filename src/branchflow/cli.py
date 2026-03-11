@@ -1,5 +1,6 @@
 import typer
 from branchflow.config import add_project, add_task, get_all_tasks, get_current_task, set_current_task
+from branchflow.git import create_branches
 from rich.box import MINIMAL
 from rich.columns import Columns
 from rich.console import Console
@@ -35,6 +36,7 @@ def new(name: str,
     try:
         add_task(name, description, projects, parent)
         set_current_task(name)
+        create_branches(get_current_task())
         console.print(f'Created task \'{name}\'.')
     except ValueError as e:
         console.print(f'[bold red]Error:[/] {e}')

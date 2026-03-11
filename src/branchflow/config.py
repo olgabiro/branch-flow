@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from branchflow.project import Project
+from branchflow.task import Task
 
 CONFIG_PATH = Path.home() / ".branchflow" / "config.yaml"
 
@@ -72,14 +74,14 @@ def get_all_tasks():
     return tasks if tasks else []
 
 
-def get_current_task():
+def get_current_task() -> Task | None:
     config = load_config()
     task_name = config.get("current_task", None)
     if task_name:
         tasks_by_name = {task['name']: task for task in config.get("tasks", [])}
         if task_name not in tasks_by_name.keys():
             return None
-        return tasks_by_name[task_name]
+        return from_config(task_name, tasks_by_name[task_name])
     return None
 
 
@@ -90,3 +92,20 @@ def set_current_task(task_name: str):
 
     config["current_task"] = task_name
     save_config(config)
+
+
+def get_project(name: str) -> Project:
+    projects = load_config().get("projects", {})
+    project_path = projects.get(name, None)
+    return Project(name, Path(project_path) if project_path else None)
+
+
+def from_config(name, task_config) -> Task:
+    project_names: list[str] = task_config.get("projects", [])
+    projects = [get_project(name) for name in project_names]
+    return Task(
+        name,
+        task_config.get("description", None),
+        projects,
+        task_config.get("parent", None)
+    )

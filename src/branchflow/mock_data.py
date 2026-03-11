@@ -52,11 +52,12 @@ def print_tasks():
 
 def print_task(t=_task):
     console.print()
-    console.print(f"[bold green]{t['name']}[/]: {t['description']}")
-    console.print(f"[bold]Projects:[/] {', '.join(t['projects'])}")
+    console.print(f"[bold green]{t['name']}[/]: {t.get('description', '')}")
+    console.print(f"[bold]Projects:[/] {', '.join(t.get('projects', []))}")
     console.print("[bold]Branches:[/]")
-    for project, branch in t['branches'].items():
+    branches = t.get('branches', {})
+    for project, branch in branches.items():
         emoji = ":arrow_up_small:" if project == "GPM" else ":computer:"
         console.print(f"  * {project}: {branch} {emoji}")
-    if t['branches'].items().__len__() == 0:
+    if branches.items().__len__() == 0:
         console.print("  * No branches tracked")
