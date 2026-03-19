@@ -9,3 +9,10 @@ dependencies = [
 
 [project.scripts]
 bf = "branchflow.cli:app"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.14.10",
+    "mypy>=1.8.0",
+    "pytest>=8.0"
+]

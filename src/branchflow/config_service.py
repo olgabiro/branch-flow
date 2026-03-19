@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import List
 
 import yaml
 from branchflow.project import Project
@@ -23,6 +23,17 @@ def save_config(config):
         yaml.safe_dump(config, f)
 
 
+def find_task(name: str | None) -> Task | None:
+    if name is None:
+        return None
+
+    tasks = load_config().get("tasks", [])
+    for task in tasks:
+        if task["name"] == name:
+            return from_config(name, task)
+    return None
+
+
 def add_project(name: str, directory: str) -> str:
     config = load_config()
     projects_ = config.get("projects", {})
@@ -41,30 +52,11 @@ def add_project(name: str, directory: str) -> str:
     return str(project_path)
 
 
-def add_task(name: str, description: Optional[str], projects: list[str], parent: Optional[str]):
+def add_task(task: Task):
     config = load_config()
     tasks_: list[dict] = config.get("tasks", [])
-
-    task_names = [task['name'] for task in tasks_]
-    if name in task_names:
-        raise ValueError(f"Task [bold green]{name}[/] already exists.")
-
-    if parent and parent not in task_names:
-        raise ValueError(f"Parent task [bold green]{parent}[/] does not exist.")
-
-    projects_ = config.get("projects", {})
-    for project in projects:
-        if project not in projects_:
-            raise ValueError(f"Unknown project [bold]{project}[/]. Add it with [italic]'bf add {project}'[/] first.")
-
-    task = {"name": name}
-    if description:
-        task["description"] = description
-    if projects:
-        task["projects"] = projects
-    if parent:
-        task["parent"] = parent
-    tasks_.append(task)
+    task_config = task_to_config(task)
+    tasks_.append(task_config)
     config["tasks"] = tasks_
     save_config(config)
 
@@ -78,7 +70,7 @@ def get_current_task() -> Task | None:
     config = load_config()
     task_name = config.get("current_task", None)
     if task_name:
-        tasks_by_name = {task['name']: task for task in config.get("tasks", [])}
+        tasks_by_name = {task["name"]: task for task in config.get("tasks", [])}
         if task_name not in tasks_by_name.keys():
             return None
         return from_config(task_name, tasks_by_name[task_name])
@@ -87,25 +79,48 @@ def get_current_task() -> Task | None:
 
 def set_current_task(task_name: str):
     config = load_config()
-    if task_name not in [task['name'] for task in config.get("tasks", [])]:
+    if task_name not in [task["name"] for task in config.get("tasks", [])]:
         raise ValueError(f"Task [bold green]{task_name}[/] does not exist.")
 
     config["current_task"] = task_name
     save_config(config)
 
 
-def get_project(name: str) -> Project:
+def get_project(name: str) -> Project | None:
     projects = load_config().get("projects", {})
     project_path = projects.get(name, None)
-    return Project(name, Path(project_path) if project_path else None)
+    return project_from_config(name, project_path) if project_path else None
+
+
+def project_from_config(name: str, project_path) -> Project:
+    assert project_path is not None
+    return Project(name, Path(project_path))
+
+
+def get_all_projects() -> List[Project]:
+    projects = load_config().get("projects", {})
+    return [project_from_config(name, path) for name, path in projects.items()]
 
 
 def from_config(name, task_config) -> Task:
     project_names: list[str] = task_config.get("projects", [])
-    projects = [get_project(name) for name in project_names]
+    projects: list[Project] = [
+        project for name in project_names if (project := get_project(name)) is not None
+    ]
     return Task(
         name,
         task_config.get("description", None),
         projects,
-        task_config.get("parent", None)
+        task_config.get("parent", None),
     )
+
+
+def task_to_config(task: Task) -> dict[str, str | list[str]]:
+    config: dict[str, str | list[str]] = {"name": task.name}
+    if task.description:
+        config["description"] = task.description
+    if task.projects:
+        config["projects"] = [project.name for project in task.projects]
+    if task.parent:
+        config["parent"] = task.parent
+    return config

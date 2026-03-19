@@ -9,4 +9,4 @@ class Project:
 
 
 def from_config(config):
-    return Project(config['name'], Path(config['directory']))
+    return Project(config["name"], Path(config["directory"]))
