@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, TypeAlias
 
 import yaml
 
@@ -7,6 +7,9 @@ from branchflow.project import Project
 from branchflow.task import Task, BranchData
 
 CONFIG_PATH = Path.home() / ".branchflow" / "config.yaml"
+
+BranchConfig: TypeAlias = dict[str, str]
+TaskConfig: TypeAlias = dict[str, str | list[str] | list[BranchConfig]]
 
 
 def load_config():
@@ -29,10 +32,7 @@ def find_task(name: str | None) -> Task | None:
         return None
 
     tasks = load_config().get("tasks", [])
-    for task in tasks:
-        if task["name"] == name:
-            return from_config(name, task)
-    return None
+    return from_config(name, tasks.get(name, None)) if name in tasks else None
 
 
 def add_project(project: Project):
@@ -45,16 +45,16 @@ def add_project(project: Project):
 
 def add_task(task: Task):
     config = load_config()
-    tasks_: list[dict] = config.get("tasks", [])
+    tasks_: dict[str, TaskConfig] = config.get("tasks", {})
     task_config = task_to_config(task)
-    tasks_.append(task_config)
+    tasks_[task.name] = task_config
     config["tasks"] = tasks_
     save_config(config)
 
 
 def get_tasks() -> list[Task]:
-    tasks = load_config().get("tasks", [])
-    return [from_config(task["name"], task) for task in tasks]
+    tasks: dict[str, TaskConfig] = load_config().get("tasks", {})
+    return [from_config(name, task) for name, task in tasks.items()]
 
 
 def get_current_task_name() -> str | None:
@@ -86,6 +86,8 @@ def get_all_projects() -> List[Project]:
 
 
 def from_config(name, task_config) -> Task:
+    if task_config is None:
+        return Task(name, None, [], None, {})
     project_names: list[str] = task_config.get("projects", [])
     projects: list[Project] = [
         project for name in project_names if (project := find_project(name)) is not None
@@ -109,8 +111,8 @@ def branch_data_from_config(task_config: dict) -> dict[str, BranchData]:
     }
 
 
-def task_to_config(task: Task) -> dict[str, str | list[str] | list[dict[str, str]]]:
-    config: dict[str, str | list[str] | list[dict[str, str]]] = {"name": task.name}
+def task_to_config(task: Task) -> TaskConfig:
+    config: TaskConfig = {}
     if task.description:
         config["description"] = task.description
     if task.projects:
