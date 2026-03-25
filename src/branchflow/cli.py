@@ -13,6 +13,15 @@ from rich.columns import Columns
 from rich.console import Console
 from rich.panel import Panel
 
+from branchflow.repository_service import add_repository
+from branchflow.task import Task
+from branchflow.task_service import (
+    create_task,
+    get_current_task,
+    get_all_tasks,
+    set_current_task,
+)
+
 app = typer.Typer()
 console = Console()
 
@@ -23,7 +32,7 @@ def add(name: str, directory: str = "."):
     Add a new project to the list of tracked projects.
     """
     try:
-        project_path = add_project(name, directory)
+        project_path = add_repository(name, directory)
         console.print(
             f"Project [bold]{name}[/] ({project_path}) added to tracked projects."
         )
@@ -82,14 +91,6 @@ def switch(name: str):
 
 
 @app.command()
-def load(name: str):
-    """
-    Load a non-tracked task.
-    """
-    console.print(f"Loaded task [bold green]{name}[/].")
-
-
-@app.command()
 def refresh():
     """
     Merge the current master changes to all the tracked task branches.
@@ -114,7 +115,7 @@ def cleanup():
     console.print("Closed up 0 tasks.")
 
 
-def _print_tasks(tasks: dict = {}):
+def _print_tasks(tasks: list[Task]):
     console.print("[bold green]Tracked Tasks[/]")
     console.print(
         Columns(
@@ -124,23 +125,17 @@ def _print_tasks(tasks: dict = {}):
     )
 
 
-def _print_task(task):
-    result = f"[bold green]{task['name']}[/]"
-    if task.get("description"):
-        result += f": {task.get('description', '')}\n"
+def _print_task(task: Task):
+    result = f"[bold green]{task.name}[/]"
+    if task.description is not None:
+        result += f": {task.description}\n"
     else:
         result += "\n"
-    if task.get("parent"):
-        result += f"[bold]Parent:[/] {task.get('parent')}\n"
+    if task.parent is not None:
+        result += f"[bold]Parent:[/] {task.parent}\n"
 
-    projects = ", ".join(task.get("projects", []))
+    projects = ", ".join([project.name for project in task.projects])
     result += f"[bold]Projects:[/] {projects if projects else '-'}\n"
-    branches = task.get("branches", {})
-    result += "[bold]Branches:[/]\n"
-    for project, branch in branches.items():
-        result += f"  * {project}: {branch}"
-    if branches.items().__len__() == 0:
-        result += "  * No branches tracked"
     return Panel.fit(result, width=30, box=MINIMAL)
 
 

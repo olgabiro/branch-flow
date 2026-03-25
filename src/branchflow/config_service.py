@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List
 
 import yaml
+
 from branchflow.project import Project
 from branchflow.task import Task
 
@@ -34,22 +35,12 @@ def find_task(name: str | None) -> Task | None:
     return None
 
 
-def add_project(name: str, directory: str) -> str:
+def add_project(project: Project):
     config = load_config()
     projects_ = config.get("projects", {})
-
-    if name in projects_:
-        raise ValueError(f"Project [bold]{name}[/] already exists ({projects_[name]}).")
-
-    project_path = Path(directory).resolve()
-
-    if not project_path.exists():
-        raise ValueError(f"Directory {directory} does not exist.")
-
-    projects_[name] = str(project_path)
+    projects_[project.name] = str(project.directory)
     config["projects"] = projects_
     save_config(config)
-    return str(project_path)
 
 
 def add_task(task: Task):
@@ -61,32 +52,24 @@ def add_task(task: Task):
     save_config(config)
 
 
-def get_all_tasks():
+def get_tasks() -> list[Task]:
     tasks = load_config().get("tasks", [])
-    return tasks if tasks else []
+    return [from_config(task["name"], task) for task in tasks]
 
 
-def get_current_task() -> Task | None:
+def get_current_task_name() -> str | None:
     config = load_config()
     task_name = config.get("current_task", None)
-    if task_name:
-        tasks_by_name = {task["name"]: task for task in config.get("tasks", [])}
-        if task_name not in tasks_by_name.keys():
-            return None
-        return from_config(task_name, tasks_by_name[task_name])
-    return None
+    return task_name
 
 
-def set_current_task(task_name: str):
+def save_current_task(task_name: str):
     config = load_config()
-    if task_name not in [task["name"] for task in config.get("tasks", [])]:
-        raise ValueError(f"Task [bold green]{task_name}[/] does not exist.")
-
     config["current_task"] = task_name
     save_config(config)
 
 
-def get_project(name: str) -> Project | None:
+def find_project(name: str) -> Project | None:
     projects = load_config().get("projects", {})
     project_path = projects.get(name, None)
     return project_from_config(name, project_path) if project_path else None
@@ -105,7 +88,7 @@ def get_all_projects() -> List[Project]:
 def from_config(name, task_config) -> Task:
     project_names: list[str] = task_config.get("projects", [])
     projects: list[Project] = [
-        project for name in project_names if (project := get_project(name)) is not None
+        project for name in project_names if (project := find_project(name)) is not None
     ]
     return Task(
         name,

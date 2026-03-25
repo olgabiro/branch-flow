@@ -47,3 +47,10 @@ def branch_exists(name: str, project_path: Path):
         cwd=project_path,
     )
     return result.returncode == 0
+
+
+def switch_branch(name: str, project_path: Path):
+    branch_name = get_branch_name(name)
+    result = subprocess.run(["git", "checkout", branch_name], cwd=project_path, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise ValueError(result.stderr)
