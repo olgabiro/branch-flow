@@ -9,7 +9,7 @@ from branchflow.task import Task, BranchData
 CONFIG_PATH = Path.home() / ".branchflow" / "config.yaml"
 
 BranchConfig: TypeAlias = dict[str, str]
-TaskConfig: TypeAlias = dict[str, str | list[str] | list[BranchConfig]]
+TaskConfig: TypeAlias = dict[str, str | list[str] | BranchConfig]
 
 
 def load_config():
@@ -102,12 +102,10 @@ def from_config(name, task_config) -> Task:
 
 
 def branch_data_from_config(task_config: dict) -> dict[str, BranchData]:
-    branches = task_config.get("branches", [])
+    branches = task_config.get("branches", {})
     return {
-        branch["project_name"]: BranchData(
-            branch["project_name"], branch["branch_name"]
-        )
-        for branch in branches
+        project_name: BranchData(project_name, branch_name)
+        for project_name, branch_name in branches.items()
     }
 
 
@@ -120,8 +118,8 @@ def task_to_config(task: Task) -> TaskConfig:
     if task.parent:
         config["parent"] = task.parent
     if task.branches:
-        config["branches"] = [
-            {"project_name": branch.project_name, "branch_name": branch.branch_name}
-            for branch in task.branches.values()
-        ]
+        config["branches"] = {
+            branch.project_name: branch.branch_name for branch in task.branches.values()
+        }
+
     return config
