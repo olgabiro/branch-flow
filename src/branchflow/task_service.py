@@ -9,15 +9,21 @@ from branchflow.config_service import (
     get_tasks,
     save_current_task,
 )
-from branchflow.git_service import get_branch_name, create_branch, get_default_branch, switch_branch
-from branchflow.task import Task
+from branchflow.git_service import (
+    get_branch_name,
+    create_branch,
+    get_default_branch,
+    switch_branch,
+)
+from branchflow.project import Project
+from branchflow.task import Task, BranchData
 
 
 def create_task(
     name: str, description: str | None, project_names: List[str], parent: str | None
 ) -> Task:
     projects = fetch_and_validate_projects(project_names)
-    task = Task(name, description, projects, parent)
+    task = Task(name, description, projects, parent, {})
     validate_task(task)
     create_parent_task_if_needed(task, project_names)
     create_branches(task)
@@ -70,9 +76,17 @@ def create_branches(task: Task):
             grandparent_branch_name = get_parent_base_branch(task.parent, directory)
             parent_branch_name = get_branch_name(task.parent)
             create_branch(parent_branch_name, directory, grandparent_branch_name)
+            _add_tracked_branch(task, project, parent_branch_name)
             create_branch(feature_branch_name, directory, parent_branch_name)
+            _add_tracked_branch(task, project, feature_branch_name)
         else:
             create_branch(feature_branch_name, directory, default_branch)
+            _add_tracked_branch(task, project, feature_branch_name)
+
+
+def _add_tracked_branch(task: Task, project: Project, branch_name: str):
+    branch_data = BranchData(project.name, branch_name)
+    task.branches[project.name] = branch_data
 
 
 def get_parent_base_branch(parent_task_name: str, directory: Path):
@@ -92,10 +106,17 @@ def get_all_tasks() -> List[Task]:
     return get_tasks()
 
 
-def set_current_task(name: str):
+def set_current_task(name: str) -> list[str]:
     task = find_task(name)
     if task is None:
         raise ValueError(f"Task [bold green]{name}[/] does not exist.")
     save_current_task(name)
+    response = []
     for project in task.projects:
-        switch_branch(name, project.directory)
+        branch = task.branches.get(project.name, None)
+        if branch is not None:
+            switch_branch(branch.branch_name, project.directory)
+            response.append(
+                f"Switched to branch [green]{branch.branch_name}[/] in project [bold green]{project.name}[/]"
+            )
+    return response

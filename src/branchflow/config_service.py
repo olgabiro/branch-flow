@@ -4,7 +4,7 @@ from typing import List
 import yaml
 
 from branchflow.project import Project
-from branchflow.task import Task
+from branchflow.task import Task, BranchData
 
 CONFIG_PATH = Path.home() / ".branchflow" / "config.yaml"
 
@@ -95,15 +95,31 @@ def from_config(name, task_config) -> Task:
         task_config.get("description", None),
         projects,
         task_config.get("parent", None),
+        branch_data_from_config(task_config),
     )
 
 
-def task_to_config(task: Task) -> dict[str, str | list[str]]:
-    config: dict[str, str | list[str]] = {"name": task.name}
+def branch_data_from_config(task_config: dict) -> dict[str, BranchData]:
+    branches = task_config.get("branches", [])
+    return {
+        branch["project_name"]: BranchData(
+            branch["project_name"], branch["branch_name"]
+        )
+        for branch in branches
+    }
+
+
+def task_to_config(task: Task) -> dict[str, str | list[str] | list[dict[str, str]]]:
+    config: dict[str, str | list[str] | list[dict[str, str]]] = {"name": task.name}
     if task.description:
         config["description"] = task.description
     if task.projects:
         config["projects"] = [project.name for project in task.projects]
     if task.parent:
         config["parent"] = task.parent
+    if task.branches:
+        config["branches"] = [
+            {"project_name": branch.project_name, "branch_name": branch.branch_name}
+            for branch in task.branches.values()
+        ]
     return config

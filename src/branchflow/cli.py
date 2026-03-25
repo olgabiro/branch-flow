@@ -1,12 +1,6 @@
 from typing import Annotated
 
 import typer
-from branchflow.config_service import (
-    add_project,
-    get_all_tasks,
-    get_current_task,
-    set_current_task,
-)
 from branchflow.task_service import create_task
 from rich.box import MINIMAL
 from rich.columns import Columns
@@ -16,7 +10,6 @@ from rich.panel import Panel
 from branchflow.repository_service import add_repository
 from branchflow.task import Task
 from branchflow.task_service import (
-    create_task,
     get_current_task,
     get_all_tasks,
     set_current_task,
@@ -84,7 +77,9 @@ def switch(name: str):
     Switch to an existing task.
     """
     try:
-        set_current_task(name)
+        responses = set_current_task(name)
+        for response in responses:
+            console.print(response)
         console.print(f"Switched to task [bold green]{name}[/].")
     except ValueError as e:
         console.print(f"[bold red]Error:[/] {e}")
@@ -136,6 +131,12 @@ def _print_task(task: Task):
 
     projects = ", ".join([project.name for project in task.projects])
     result += f"[bold]Projects:[/] {projects if projects else '-'}\n"
+
+    if task.branches:
+        result += "[bold]Branches:[/]\n"
+        for branch in task.branches.values():
+            result += f"  * {branch.project_name}: {branch.branch_name}\n"
+
     return Panel.fit(result, width=30, box=MINIMAL)
 
 
