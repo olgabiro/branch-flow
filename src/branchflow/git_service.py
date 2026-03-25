@@ -49,3 +49,14 @@ def switch_branch(branch_name: str, project_path: Path):
     )
     if result.returncode != 0:
         raise ValueError(result.stderr)
+
+
+def merge_branch(base_branch_name: str, branch_name: str, project_path: Path):
+    result = subprocess.run(
+        ["git", "merge", base_branch_name, branch_name],
+        cwd=project_path,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise ValueError(result.stderr)

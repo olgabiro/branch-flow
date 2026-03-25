@@ -1,7 +1,9 @@
 from typing import Annotated
 
 import typer
-from branchflow.task_service import create_task
+
+from branchflow.project import Project
+from branchflow.task_service import create_task, merge_master_to_branches
 from rich.box import MINIMAL
 from rich.columns import Columns
 from rich.console import Console
@@ -12,7 +14,7 @@ from branchflow.task import Task
 from branchflow.task_service import (
     get_current_task,
     get_all_tasks,
-    set_current_task,
+    change_current_task,
 )
 
 app = typer.Typer()
@@ -25,9 +27,9 @@ def add(name: str, directory: str = "."):
     Add a new project to the list of tracked projects.
     """
     try:
-        project_path = add_repository(name, directory)
+        project: Project = add_repository(name, directory)
         console.print(
-            f"Project [bold]{name}[/] ({project_path}) added to tracked projects."
+            f"Project [bold]{name}[/] ({project.directory}) added to tracked projects."
         )
     except ValueError as e:
         console.print(f"[bold red]Error:[/] {e}")
@@ -77,7 +79,7 @@ def switch(name: str):
     Switch to an existing task.
     """
     try:
-        responses = set_current_task(name)
+        responses = change_current_task(name)
         for response in responses:
             console.print(response)
         console.print(f"Switched to task [bold green]{name}[/].")
@@ -90,7 +92,11 @@ def refresh():
     """
     Merge the current master changes to all the tracked task branches.
     """
-    console.print("Refreshed the branches.")
+    try:
+        merge_master_to_branches()
+        console.print("Refreshed the branches.")
+    except ValueError as e:
+        console.print(f"[bold red]Error:[/] {e}")
 
 
 @app.command()

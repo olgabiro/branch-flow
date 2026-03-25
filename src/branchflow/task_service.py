@@ -14,6 +14,7 @@ from branchflow.git_service import (
     create_branch,
     get_default_branch,
     switch_branch,
+    merge_branch,
 )
 from branchflow.project import Project
 from branchflow.task import Task, BranchData
@@ -106,7 +107,7 @@ def get_all_tasks() -> List[Task]:
     return get_tasks()
 
 
-def set_current_task(name: str) -> list[str]:
+def change_current_task(name: str) -> list[str]:
     task = find_task(name)
     if task is None:
         raise ValueError(f"Task [bold green]{name}[/] does not exist.")
@@ -120,3 +121,24 @@ def set_current_task(name: str) -> list[str]:
                 f"Switched to branch [green]{branch.branch_name}[/] in project [bold green]{project.name}[/]"
             )
     return response
+
+
+def merge_master_to_branches(name: str | None = None):
+    task = find_task(name) if name else get_current_task()
+    if task is None:
+        raise ValueError("No task is currently active.")
+
+    parent_name = task.parent
+    for project_name, branch in task.branches.items():
+        project = find_project(project_name)
+        if project is None:
+            raise ValueError(f"Project [bold green]{project_name}[/] does not exist.")
+        branch_name = branch.branch_name
+        if parent_name:
+            parent_branch = get_branch_name(parent_name)
+            parent_base_branch = get_parent_base_branch(parent_name, project.directory)
+            merge_branch(parent_base_branch, parent_branch, project.directory)
+            merge_branch(parent_branch, branch_name, project.directory)
+        else:
+            base_branch = get_default_branch(project.directory)
+            merge_branch(base_branch, branch_name, project.directory)
