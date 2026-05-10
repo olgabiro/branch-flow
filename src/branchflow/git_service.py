@@ -51,9 +51,10 @@ def switch_branch(branch_name: str, project_path: Path):
         raise ValueError(result.stderr)
 
 
-def merge_branch(base_branch_name: str, branch_name: str, project_path: Path):
+def merge_branch(source_branch: str, target_branch: str, project_path: Path):
+    switch_branch(target_branch, project_path)
     result = subprocess.run(
-        ["git", "merge", base_branch_name, branch_name],
+        ["git", "merge", source_branch],
         cwd=project_path,
         capture_output=True,
         text=True,

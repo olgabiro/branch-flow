@@ -120,6 +120,12 @@ def change_current_task(name: str) -> list[str]:
             response.append(
                 f"Switched to branch [green]{branch.branch_name}[/] in project [bold green]{project.name}[/]"
             )
+        else:
+            branch_name = get_branch_name(task.name)
+            switch_branch(branch_name, project.directory)
+            response.append(
+                f"Switched to branch [green]{branch_name}[/] in project [bold green]{project.name}[/]"
+            )
     return response
 
 
