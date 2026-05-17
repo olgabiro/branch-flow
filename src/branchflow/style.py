@@ -4,22 +4,24 @@ from rich.panel import Panel
 from rich.style import Style
 from rich.theme import Theme
 
-rose_theme = Theme({
-    "rose": Style(color="#f0a0a0"),
-    "rose.bold": Style(color="#f0a0a0", bold=True),
-    "rose.deep": Style(color="#d47878"),
-    "rose.light": Style(color="#f5baba"),
-    "text": Style(color="#e8d5d5"),
-    "text.muted": Style(color="#8a7070"),
-    "text.dim": Style(color="#634f4f"),
-    "success": Style(color="#a8c9a8", bold=False),
-    "warning": Style(color="#d4b878"),
-    "error": Style(color="#d47878", bold=True),
-    "border": Style(color="#3d2a2e"),
-    "title": Style(color="#f0a0a0", bold=True),
-    "subtitle": Style(color="#d4a0a0", italic=True),
-    "muted": Style(color="#634f4f"),
-})
+rose_theme = Theme(
+    {
+        "rose": Style(color="#f0a0a0"),
+        "rose.bold": Style(color="#f0a0a0", bold=True),
+        "rose.deep": Style(color="#d47878"),
+        "rose.light": Style(color="#f5baba"),
+        "text": Style(color="#e8d5d5"),
+        "text.muted": Style(color="#8a7070"),
+        "text.dim": Style(color="#634f4f"),
+        "success": Style(color="#a8c9a8", bold=False),
+        "warning": Style(color="#d4b878"),
+        "error": Style(color="#d47878", bold=True),
+        "border": Style(color="#3d2a2e"),
+        "title": Style(color="#f0a0a0", bold=True),
+        "subtitle": Style(color="#d4a0a0", italic=True),
+        "muted": Style(color="#634f4f"),
+    }
+)
 
 STYLE = {
     "bg": "#1a1517",

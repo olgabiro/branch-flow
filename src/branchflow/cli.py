@@ -3,7 +3,7 @@ from typing import Annotated
 import typer
 
 from branchflow.project import Project
-from branchflow.style import STYLE, success, error, warning, info
+from branchflow.style import success, error, info
 from branchflow.task_service import create_task, merge_master_to_branches
 from rich.box import MINIMAL
 from rich.columns import Columns

@@ -13,14 +13,15 @@ from branchflow.git_service import (
     get_branch_name,
     create_branch,
     switch_branch,
-    merge_branch, detect_base_branch,
+    merge_branch,
+    detect_base_branch,
 )
 from branchflow.project import Project
 from branchflow.task import Task, BranchData
 
 
 def create_task(
-        name: str, description: str | None, project_names: List[str], parent: str | None
+    name: str, description: str | None, project_names: List[str], parent: str | None
 ) -> Task:
     projects = fetch_and_validate_projects(project_names)
     task = Task(name, description, projects, parent, {})
@@ -41,7 +42,7 @@ def validate_task(task: Task):
 def validate_no_cycles(task: Task):
     parent: Task | None = find_task(task.parent)
     while parent is not None:
-        if parent.name == task.name:
+        if parent.parent == task.name:
             raise ValueError(
                 "Cyclic dependency detected. Correct the parent task relationships."
             )
@@ -73,7 +74,7 @@ def create_branches(task: Task):
         default_branch = detect_base_branch(directory)
         feature_branch_name = get_branch_name(task.name)
         if task.parent is not None:
-            grandparent_branch_name = get_parent_base_branch(task.parent, directory)
+            grandparent_branch_name = get_base_branch(task.parent, directory)
             parent_branch_name = get_branch_name(task.parent)
             create_branch(parent_branch_name, directory, grandparent_branch_name)
             _add_tracked_branch(task, project, parent_branch_name)
@@ -89,12 +90,12 @@ def _add_tracked_branch(task: Task, project: Project, branch_name: str):
     task.branches[project.name] = branch_data
 
 
-def get_parent_base_branch(parent_task_name: str, directory: Path):
-    grandparent_task = find_task(parent_task_name)
-    if grandparent_task is None or grandparent_task.parent is None:
+def get_base_branch(task_name: str, directory: Path):
+    task = find_task(task_name)
+    if task is None or task.parent is None:
         return detect_base_branch(directory)
     else:
-        return get_branch_name(grandparent_task.parent)
+        return get_branch_name(task.parent)
 
 
 def get_current_task() -> Task | None:
@@ -141,7 +142,7 @@ def merge_master_to_branches(name: str | None = None):
         branch_name = branch.branch_name
         if parent_name:
             parent_branch = get_branch_name(parent_name)
-            parent_base_branch = get_parent_base_branch(parent_name, project.directory)
+            parent_base_branch = get_base_branch(parent_name, project.directory)
             merge_branch(parent_base_branch, parent_branch, project.directory)
             merge_branch(parent_branch, branch_name, project.directory)
         else:

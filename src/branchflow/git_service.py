@@ -4,7 +4,6 @@ from pathlib import Path
 from rich.console import Console
 from rich.markup import escape
 
-from branchflow.style import STYLE
 
 console = Console()
 
