@@ -9,7 +9,7 @@ from rich.columns import Columns
 from rich.console import Console
 from rich.panel import Panel
 
-from branchflow.repository_service import add_repository
+from branchflow.project_service import create_project
 from branchflow.task import Task
 from branchflow.task_service import (
     get_current_task,
@@ -27,7 +27,7 @@ def add(name: str, directory: str = "."):
     Add a new project to the list of tracked projects.
     """
     try:
-        project: Project = add_repository(name, directory)
+        project: Project = create_project(name, directory)
         console.print(
             f"Project [bold]{name}[/] ({project.directory}) added to tracked projects."
         )
