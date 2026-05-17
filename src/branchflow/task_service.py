@@ -12,16 +12,15 @@ from branchflow.config_service import (
 from branchflow.git_service import (
     get_branch_name,
     create_branch,
-    get_default_branch,
     switch_branch,
-    merge_branch,
+    merge_branch, detect_base_branch,
 )
 from branchflow.project import Project
 from branchflow.task import Task, BranchData
 
 
 def create_task(
-    name: str, description: str | None, project_names: List[str], parent: str | None
+        name: str, description: str | None, project_names: List[str], parent: str | None
 ) -> Task:
     projects = fetch_and_validate_projects(project_names)
     task = Task(name, description, projects, parent, {})
@@ -71,7 +70,7 @@ def create_parent_task_if_needed(task: Task, project_names: List[str]):
 def create_branches(task: Task):
     for project in task.projects:
         directory = project.directory
-        default_branch = get_default_branch(directory)
+        default_branch = detect_base_branch(directory)
         feature_branch_name = get_branch_name(task.name)
         if task.parent is not None:
             grandparent_branch_name = get_parent_base_branch(task.parent, directory)
@@ -93,7 +92,7 @@ def _add_tracked_branch(task: Task, project: Project, branch_name: str):
 def get_parent_base_branch(parent_task_name: str, directory: Path):
     grandparent_task = find_task(parent_task_name)
     if grandparent_task is None or grandparent_task.parent is None:
-        return get_default_branch(directory)
+        return detect_base_branch(directory)
     else:
         return get_branch_name(grandparent_task.parent)
 
@@ -146,5 +145,5 @@ def merge_master_to_branches(name: str | None = None):
             merge_branch(parent_base_branch, parent_branch, project.directory)
             merge_branch(parent_branch, branch_name, project.directory)
         else:
-            base_branch = get_default_branch(project.directory)
+            base_branch = detect_base_branch(project.directory)
             merge_branch(base_branch, branch_name, project.directory)

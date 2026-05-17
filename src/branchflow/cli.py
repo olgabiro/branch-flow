@@ -3,6 +3,7 @@ from typing import Annotated
 import typer
 
 from branchflow.project import Project
+from branchflow.style import STYLE, success, error, warning, info
 from branchflow.task_service import create_task, merge_master_to_branches
 from rich.box import MINIMAL
 from rich.columns import Columns
@@ -49,7 +50,7 @@ def new(
         create_task(name, description, projects, parent)
         console.print(f"Created task '{name}'.")
     except ValueError as e:
-        console.print(f"[bold red]Error:[/] {e}")
+        console.print(error(e))
 
 
 @app.command("list")
@@ -68,7 +69,7 @@ def status():
     """
     task = get_current_task()
     if not task:
-        console.print("No task is currently active.")
+        console.print(info("No task is currently active."))
     else:
         console.print(_print_task(task))
 
@@ -82,9 +83,9 @@ def switch(name: str):
         responses = change_current_task(name)
         for response in responses:
             console.print(response)
-        console.print(f"Switched to task [bold green]{name}[/].")
+        console.print(success("Switched to task [bold green]{name}[/]."))
     except ValueError as e:
-        console.print(f"[bold red]Error:[/] {e}")
+        console.print(error(e))
 
 
 @app.command()
@@ -94,9 +95,9 @@ def refresh():
     """
     try:
         merge_master_to_branches()
-        console.print("Refreshed the branches.")
+        console.print(success("Refreshed the branches."))
     except ValueError as e:
-        console.print(f"[bold red]Error:[/] {e}")
+        console.print(error(e))
 
 
 @app.command()
@@ -104,6 +105,7 @@ def close():
     """
     Close the current task and delete the local branches.
     """
+    # TODO: Implement this command
     console.print("Closed task PD-1234.")
     console.print("All the local branches have been deleted.")
 
@@ -113,6 +115,7 @@ def cleanup():
     """
     Automatically close all the tasks that have no pending PRs.
     """
+    # TODO: Implement this command
     console.print("Closed up 0 tasks.")
 
 
